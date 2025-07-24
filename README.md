@@ -4,11 +4,17 @@
 A simple Streamlit app to collect, preserve, and display traditional Indian proverbs from different regions, languages, and dialects — ensuring that local wisdom continues to thrive in the digital age.
 
 ---
+## 🔗 View Collected Proverbs on Google Sheets
+
+👉 [Proverb Collection Sheet](https://docs.google.com/spreadsheets/d/19Xup-oYL5-svDZGFYu4m3dUtv0EjQ_TWLqnnfuZY2kg)
 
 ## 🚀 Demo
 
 👉 [Live on Hugging Face Spaces](https://huggingface.co/spaces/TanujaPammina/Proverb_Collector)
-*(Replace the link with your actual space URL)*
+
+
+
+
 
 ---
 
