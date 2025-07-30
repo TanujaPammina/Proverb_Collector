@@ -3,18 +3,10 @@
 
 A simple Streamlit app to collect, preserve, and display traditional Indian proverbs from different regions, languages, and dialects — ensuring that local wisdom continues to thrive in the digital age.
 
----
-## 🔗 View Collected Proverbs on Google Sheets
-
-👉 [Proverb Collection Sheet](https://docs.google.com/spreadsheets/d/19Xup-oYL5-svDZGFYu4m3dUtv0EjQ_TWLqnnfuZY2kg)
 
 ## 🚀 Demo
 
 👉 [Live on Hugging Face Spaces](https://huggingface.co/spaces/TanujaPammina/Proverb_Collector)
-
-
-
-
 
 ---
 
@@ -31,9 +23,8 @@ A simple Streamlit app to collect, preserve, and display traditional Indian prov
 ## 🛠️ Tech Stack
 
 - [Streamlit](https://streamlit.io/) – Interactive UI
-- [gspread](https://github.com/burnash/gspread) – Google Sheets API
 - [Hugging Face Spaces](https://huggingface.co/spaces) – Hosting platform
-- `oauth2client`, `pandas`, `base64`, `datetime`
+- `oauth2client`, `pandas`,  `datetime`
 
 ---
 
@@ -50,15 +41,7 @@ A simple Streamlit app to collect, preserve, and display traditional Indian prov
 
 ## 🔐 Environment Variable
 
-To protect your Google Sheets credentials, encode your `Proverb-service.json` key as base64 and save it as a secret in Hugging Face:
 
-bash
-import base64
-
-with open("Proverb-service.json", "rb") as f:
-    print(base64.b64encode(f.read()).decode())
-Then in Hugging Face Secrets, add:
-GSPREAD_JSON = <your base64 string here>
 🧪 Installation (for local testing)
 git clone https://github.com/your-username/proverb-collector.git
 cd proverb-collector
