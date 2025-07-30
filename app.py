@@ -1,70 +1,82 @@
 import streamlit as st
+from datasets import load_dataset, Dataset
 import pandas as pd
-from datetime import datetime
-import gspread
-import os
-import json
-import base64
-from oauth2client.service_account import ServiceAccountCredentials
 
-# ------------------ Google Sheets Setup ------------------ #
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# Save to Hugging Face dataset
+def save_to_dataset(data, dataset_repo="TanujaPammina/proverbs"):
+    csv_file = "proverbs.csv"
 
-# Load base64-encoded credentials from Hugging Face secrets
-creds_json = base64.b64decode(os.environ["GSPREAD_JSON"]).decode()
-creds_dict = json.loads(creds_json)
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    # Try loading existing dataset
+    try:
+        dataset = load_dataset(dataset_repo, split="train")
+        df_existing = dataset.to_pandas()
+    except:
+        df_existing = pd.DataFrame()
 
-client = gspread.authorize(creds)
-sheet = client.open("Proverbs Collection").sheet1  # Change sheet name if needed
+    # Harmonize old column names
+    if 'Translation' in df_existing.columns and 'English_Translation' not in df_existing.columns:
+        df_existing['English_Translation'] = df_existing['Translation']
 
-# ------------------ Streamlit UI ------------------ #
-st.set_page_config(page_title="Indian Local Proverb Collector", page_icon="📜", layout="centered")
+    # Drop unwanted columns (including Timestamp)
+    df_existing = df_existing.drop(
+        columns=[col for col in ['TimeStamp', 'Translation', 'Timestamp'] if col in df_existing.columns],
+        errors='ignore'
+    )
 
-st.markdown("## 📜 Indian Local Proverb Collector")
-st.markdown("Preserving the wisdom of our ancestors, one proverb at a time.")
-st.markdown("---")
+    # Create new row
+    df_new = pd.DataFrame([data])
+    df_combined = pd.concat([df_existing, df_new], ignore_index=True)
 
-with st.container():
-    st.subheader("📝 Share Your Proverb")
+    # Save to CSV
+    df_combined.to_csv(csv_file, index=False, encoding='utf-8')
 
-    col1, col2 = st.columns(2)
+    # Push to Hugging Face
+    ds_to_push = Dataset.from_pandas(df_combined)
+    ds_to_push.push_to_hub(dataset_repo, split="train")
 
-    with col1:
-        name = st.text_input("👤 Your Name")
-        location = st.text_input("📍 Village / City")
+# --------------------- Streamlit UI -----------------------
 
-    with col2:
-        language = st.text_input("🗣️ Language or Dialect")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+st.set_page_config(page_title="Telugu Proverb Collector", page_icon="🌿")
+st.title("🌿 Telugu Proverb Collector")
 
-    proverb = st.text_area("💬 Enter the Proverb in Your Language")
-    translation = st.text_area("🌐 English Translation (Optional)")
+with st.form("proverb_form"):
+    name = st.text_input("👤 Name")
+    location = st.text_input("📍 Location")
+    language = st.text_input("🗣 Language", value="Telugu")
+    proverb = st.text_area("💬 Enter Proverb in Your Language")
+    english_translation = st.text_area("🔤 Translate Proverb to English")
 
-    if st.button("📤 Submit Proverb"):
-        if name and location and language and proverb:
-            row = [name, location, language, proverb, translation, timestamp]
-            try:
-                sheet.append_row(row)
-                st.success("✅ Proverb Submitted Successfully!")
-                st.balloons()
-            except Exception as e:
-                st.error(f"❌ Failed to submit data: {e}")
+    submitted = st.form_submit_button("✅ Submit Proverb")
+
+    if submitted:
+        if name and proverb:
+            data = {
+                "Name": name,
+                "Location": location,
+                "Language": language,
+                "Proverb": proverb,
+                "English_Translation": english_translation
+                # No Timestamp included
+            }
+            save_to_dataset(data)
+            st.success("✅ Proverb submitted successfully!")
+            st.balloons()
         else:
-            st.warning("⚠️ Please fill in all required fields.")
+            st.error("⚠️ Please fill in at least Name and Proverb fields.")
 
-st.markdown("---")
-st.info("📚 Thank you for helping preserve our cultural heritage!")
+# View submitted data
+if st.button("📄 View Submitted Proverbs"):
+    try:
+        dataset = load_dataset("TanujaPammina/proverbs", split="train")
+        df = dataset.to_pandas()
 
-# ------------------ Display Submitted Proverbs ------------------ #
-st.subheader("📖 View Collected Proverbs")
+        # Harmonize column names
+        if 'Translation' in df.columns and 'English_Translation' not in df.columns:
+            df['English_Translation'] = df['Translation']
 
-try:
-    data = sheet.get_all_records()
-    if data:
-        df = pd.DataFrame(data)
+        # Drop unnecessary columns
+        df = df.drop(columns=[col for col in ['Translation', 'Timestamp', 'TimeStamp'] if col in df.columns], errors='ignore')
+
         st.dataframe(df)
-    else:
-        st.info("No proverbs submitted yet.")
-except Exception as e:
-    st.error(f"⚠️ Error fetching data from Google Sheet: {e}")
+    except Exception as e:
+        st.error(f"❌ Could not load data: {e}")
